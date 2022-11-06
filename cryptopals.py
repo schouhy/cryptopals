@@ -6,6 +6,11 @@ import base64
 def hex_to_bytes(h):
     return bytearray.fromhex(h)
 
+def xor_block(block1: bytes, block2: bytes):
+    if len(block1) != len(block2):
+        raise ValueError("blocks need to have same length")
+    return bytes([x ^ y for x, y in zip(block1, block2)])
+
 def single_byte_xor(barray, c):
     return bytearray(map(lambda x: x ^ c, barray))
 
@@ -19,7 +24,7 @@ def is_common(c):
             return True
     return False
 
-def score(s, ret_message=False):
+def score_most_likely_english(s, ret_message=False):
     res = 0
     message = []
     for i in range(0, 256):
@@ -88,7 +93,7 @@ def get_keysize_candidates_entropy(s, min_size=2, max_size=40):
 
 def break_repeating_xor(s, keysize):
     cipher_chunks = [s[i : : keysize] for i in range(keysize)]
-    text_chunks = [bytearray(score(chunk, True)[1]).decode() for chunk in cipher_chunks]
+    text_chunks = [bytearray(score_most_likely_english(chunk, True)[1]).decode() for chunk in cipher_chunks]
     return "".join(["".join(t) for t in zip(*text_chunks)])
 
 def load_multiline_base64(filepath):
@@ -98,7 +103,32 @@ def load_multiline_base64(filepath):
     cipher = base64.b64decode("".join(cipher))
     return cipher
 
+def pkcs7_padding(s, block_size: int):
+    padding_length = (-len(s)) % block_size
+    if padding_length < 0:
+        padding_length += block_size
+    if isinstance(s, str):
+        return s + chr(padding_length)*padding_length
+    if isinstance(s, bytearray):
+        return s + bytearray([padding_length]*padding_length)
 
-s = "Imported Cryptopals functions"
-print(s)
+def aes_cbc_decrypt(cipher: bytes, key: bytes, initialization_vector: bytes):
+    from Crypto.Cipher import AES
+    from functools import reduce
+
+    aes_ecb = AES.new(key, AES.MODE_ECB)
+    if len(cipher) % AES.block_size != 0:
+        raise ValueError(f"Malformed cipher. Its length is not divisible by {AES.block_size}")
+
+    num_blocks = len(cipher) // AES.block_size
+    cipher_blocks = [cipher[AES.block_size*i: AES.block_size*(i+1)] for i in range(num_blocks)]
+    plaintext_blocks = []
+
+    for cipher_block in cipher_blocks:
+        plaintext_blocks.append(xor_block(aes_ecb.decrypt(cipher_block), initialization_vector))
+        initialization_vector = cipher_block
+
+    return reduce(lambda a, b: a + b, plaintext_blocks)
+
+
 
