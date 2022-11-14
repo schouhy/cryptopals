@@ -180,3 +180,32 @@ def detect_encryption_oracle_11(func):
         return "ECB"
     return "CBC"
 
+def encryption_oracle_12(plaintext: bytes):
+    from Crypto.Cipher import AES
+    from random import randint
+    from base64 import b64decode
+    key = b"e_N\x92\xae\x1av\xcd\xbap\x1e\xadd\xde\xb9\xf3"
+    suffix = b64decode("Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK")
+    plaintext = bytearray(plaintext) + suffix
+
+    aes_ecb = AES.new(key, AES.MODE_ECB)
+    if len(plaintext) % AES.block_size != 0:
+        plaintext = pkcs7_padding(plaintext, AES.block_size)
+    return aes_ecb.encrypt(plaintext)
+
+def decrypt_suffix_encryption_oracle_12():
+    message_length = len(encryption_oracle_12(b""))
+    assert message_length % 16 == 0
+    decrypted_message = b""
+
+    number_of_blocks = message_length // 16
+    for i in range(number_of_blocks):
+        for j in range(15, -1, -1):
+            block_to_find = encryption_oracle_12(b"A"*j)[i*16: (i+1)*16]
+            for c in range(0, 255):
+                block_candidate = encryption_oracle_12(b"A"*j + decrypted_message + bytes([c]))[i*16: (i+1)*16]
+                if block_candidate == block_to_find:
+                    decrypted_message = decrypted_message + bytes([c])
+                    break
+    return decrypted_message
+
