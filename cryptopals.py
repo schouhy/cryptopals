@@ -111,6 +111,27 @@ def pkcs7_padding(s, block_size: int):
         return s + chr(padding_length)*padding_length
     if isinstance(s, bytearray):
         return s + bytearray([padding_length]*padding_length)
+    if isinstance(s, bytes):
+        return bytearray(s) + bytearray([padding_length]*padding_length)
+
+def aes_cbc_encrypt(plaintext: bytes, key: bytes, initialization_vector: bytes):
+    from Crypto.Cipher import AES
+    from functools import reduce
+
+    aes_ecb = AES.new(key, AES.MODE_ECB)
+    if len(plaintext) % AES.block_size != 0:
+        plaintext = pkcs7_padding(plaintext, AES.block_size)
+
+    num_blocks = len(plaintext) // AES.block_size
+    plaintext_blocks = [plaintext[AES.block_size*i: AES.block_size*(i+1)] for i in range(num_blocks)]
+    cipher_blocks = []
+
+    for plaintext_block in plaintext_blocks:
+        initialization_vector = aes_ecb.encrypt(xor_block(plaintext_block, initialization_vector))
+        cipher_blocks.append(initialization_vector)
+
+    return reduce(lambda a, b: a + b, cipher_blocks)
+
 
 def aes_cbc_decrypt(cipher: bytes, key: bytes, initialization_vector: bytes):
     from Crypto.Cipher import AES
@@ -130,5 +151,32 @@ def aes_cbc_decrypt(cipher: bytes, key: bytes, initialization_vector: bytes):
 
     return reduce(lambda a, b: a + b, plaintext_blocks)
 
+def sample_random_bytes(size: int):
+    from random import randint
+    return bytes([randint(0, 255) for _ in range(size)])
 
+def encryption_oracle_11(plaintext: bytes):
+    from Crypto.Cipher import AES
+    from random import randint
+    prefix = sample_random_bytes(randint(5, 10))
+    suffix = sample_random_bytes(randint(5, 10))
+    key = sample_random_bytes(16)
+    plaintext = prefix + bytearray(plaintext) + suffix
+    if randint(0, 9) <= 4:
+        iv = sample_random_bytes(16)
+        return aes_cbc_encrypt(plaintext, key, iv)
+    else:
+        aes_ecb = AES.new(key, AES.MODE_ECB)
+        if len(plaintext) % AES.block_size != 0:
+            plaintext = pkcs7_padding(plaintext, AES.block_size)
+        return aes_ecb.encrypt(plaintext)
+
+def detect_encryption_oracle_11(func):
+    from collections import Counter
+
+    cipher = func(bytes([0]*64))
+    count = max(Counter([cipher[i*16:(i+1)*16] for i in range(len(cipher)//16)]).values())
+    if count > 1:
+        return "ECB"
+    return "CBC"
 
