@@ -107,12 +107,26 @@ def pkcs7_padding(s, block_size: int):
     padding_length = (-len(s)) % block_size
     if padding_length < 0:
         padding_length += block_size
+    if padding_length == 0:
+        padding_length = block_size
     if isinstance(s, str):
         return s + chr(padding_length)*padding_length
     if isinstance(s, bytearray):
         return s + bytearray([padding_length]*padding_length)
     if isinstance(s, bytes):
         return bytearray(s) + bytearray([padding_length]*padding_length)
+
+def aes_ecb_encrypt(plaintext: bytes, key: bytes):
+    from Crypto.Cipher import AES
+    aes_ecb = AES.new(key, AES.MODE_ECB)
+    return aes_ecb.encrypt(pkcs7_padding(plaintext, 16))
+
+def aes_ecb_decrypt(ciphertext: bytes, key: bytes):
+    from Crypto.Cipher import AES
+    aes_ecb = AES.new(key, AES.MODE_ECB)
+    plaintext = aes_ecb.decrypt(ciphertext)
+    padding = plaintext[-1]
+    return plaintext[:-padding]
 
 def aes_cbc_encrypt(plaintext: bytes, key: bytes, initialization_vector: bytes):
     from Crypto.Cipher import AES
@@ -152,8 +166,8 @@ def aes_cbc_decrypt(cipher: bytes, key: bytes, initialization_vector: bytes):
     return reduce(lambda a, b: a + b, plaintext_blocks)
 
 def sample_random_bytes(size: int):
-    from random import randint
-    return bytes([randint(0, 255) for _ in range(size)])
+    from os import urandom
+    return urandom(size)
 
 def encryption_oracle_11(plaintext: bytes):
     from Crypto.Cipher import AES
@@ -193,19 +207,67 @@ def encryption_oracle_12(plaintext: bytes):
         plaintext = pkcs7_padding(plaintext, AES.block_size)
     return aes_ecb.encrypt(plaintext)
 
+def get_oracle_block_size(oracle):
+    m = len(oracle(b""))
+    i = 1
+    M = len(oracle(b"A"*i))
+    while m == M:
+        i += 1
+        M = len(oracle(b"A"*i))
+    return M - m
+
 def decrypt_suffix_encryption_oracle_12():
+    block_size = get_oracle_block_size(encryption_oracle_12)
     message_length = len(encryption_oracle_12(b""))
-    assert message_length % 16 == 0
+    assert message_length % block_size == 0
     decrypted_message = b""
 
-    number_of_blocks = message_length // 16
+    number_of_blocks = message_length // block_size
     for i in range(number_of_blocks):
         for j in range(15, -1, -1):
-            block_to_find = encryption_oracle_12(b"A"*j)[i*16: (i+1)*16]
+            block_to_find = encryption_oracle_12(b"A"*j)[i*block_size: (i+1)*block_size]
             for c in range(0, 255):
-                block_candidate = encryption_oracle_12(b"A"*j + decrypted_message + bytes([c]))[i*16: (i+1)*16]
+                block_candidate = encryption_oracle_12(b"A"*j + decrypted_message + bytes([c]))[i*block_size: (i+1)*block_size]
                 if block_candidate == block_to_find:
                     decrypted_message = decrypted_message + bytes([c])
                     break
     return decrypted_message
+
+class EncryptionOracle13:
+    def __init__(self):
+        self._key = sample_random_bytes(16)
+
+    @staticmethod
+    def parse_dictionary(s: bytes):
+        return dict(keyvalue.split("=") for keyvalue in s.decode().split("&"))
+    
+    @staticmethod
+    def profile_for(email: bytes):
+        if b"=" in email or b"&" in email:
+            raise ValueError("email cannot contain & or =")
+        return b"email=" + email + b"&uid=10&role=user"
+
+    def make_profile(self, email):
+        return aes_ecb_encrypt(self.profile_for(email), self._key)
+
+    def read_profile(self, ciphertext):
+        return self.parse_dictionary(aes_ecb_decrypt(ciphertext, self._key))
+
+def forge_admin_challenge_13(oracle):
+    assert get_oracle_block_size(oracle.make_profile) == 16
+    # Compute first blocks having "...&user=" block aligned so as to append a block corresponding
+    # to the "admin||padding" after it.
+    length1 = len(b"email=&uid=10&user=")
+    offset = ((length1 + 15) // 16) * 16 - length1
+    stem = oracle.make_profile(b"A"*offset)[:-16]
+    # Have the oracle encrypt the block "admin||padding" as the second block of a 
+    # two block sized email address
+    length2 = 16 - len(b"email=")
+    admin_block = oracle.make_profile(b"A"*length2 + pkcs7_padding(b"admin", 16))[16:32]
+    return stem + admin_block
+
+def solve_challenge_13():
+    oracle = EncryptionOracle13()
+    forged_profile = forge_admin_challenge_13(oracle)
+    return oracle.read_profile(forged_profile)
 
