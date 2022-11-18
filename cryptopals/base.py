@@ -3,6 +3,7 @@ import numpy  as np
 from collections import Counter
 import base64
 
+
 def hex_to_bytes(h):
     return bytearray.fromhex(h)
 
@@ -11,7 +12,10 @@ def xor_block(block1: bytes, block2: bytes):
         raise ValueError("blocks need to have same length")
     return bytes([x ^ y for x, y in zip(block1, block2)])
 
-def single_byte_xor(barray, c):
+def single_byte_xor(barray: bytes, c: int):
+    if c < 0 or c > 255:
+        raise ValueError("`c` must be between 0 and 255")
+
     return bytearray(map(lambda x: x ^ c, barray))
 
 def is_in_interval(c, lo, hi):
@@ -24,31 +28,24 @@ def is_common(c):
             return True
     return False
 
-def score_most_likely_english(s, ret_message=False):
+def get_most_englishy_single_byte_decryption(cipher: bytes):
     res = 0
     message = []
     for i in range(0, 256):
         new_res = 0
-        ts = [o ^ i for o in s]
+        ts = [o ^ i for o in cipher]
         for c in ts:
             if is_common(c):
                 new_res += 1
         if new_res > res:
             res = new_res
             message = ts
-    if ret_message:
-        return res, message
-    return res
+    return bytes(message)
 
-def bytearray_entropy(b):
+def entropy(b):
     frequencies = np.array(list(Counter(b).values()))
     frequencies = frequencies / frequencies.sum()
     return (frequencies*(-np.log2(frequencies))).sum()
-
-
-def entropy(h):
-    s = bytearray.fromhex(h)
-    return bytearray_entropy(s)
 
 def ice_encrypt(s):
     ice = [ord(c) for c in "ICE"]
@@ -87,13 +84,13 @@ def get_keysize_candidates_normalized_hamming(s, min_size=2, max_size=40):
 def get_keysize_candidates_entropy(s, min_size=2, max_size=40):
     average_entropy = []
     for keysize in range(min_size, max_size + 1):
-        m = np.array(([bytearray_entropy(s[i::keysize]) for i in range(keysize)])).mean()
+        m = np.array(([entropy(s[i::keysize]) for i in range(keysize)])).mean()
         average_entropy.append((keysize, m))
     return sorted(average_entropy, key = lambda x: x[1])
 
 def break_repeating_xor(s, keysize):
     cipher_chunks = [s[i : : keysize] for i in range(keysize)]
-    text_chunks = [bytearray(score_most_likely_english(chunk, True)[1]).decode() for chunk in cipher_chunks]
+    text_chunks = [get_most_englishy_single_byte_decryption(chunk, True)[1].decode() for chunk in cipher_chunks]
     return "".join(["".join(t) for t in zip(*text_chunks)])
 
 def load_multiline_base64(filepath):
