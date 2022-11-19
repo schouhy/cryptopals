@@ -3,7 +3,7 @@ import pytest
 import cryptopals.base as crypto_base
 
 
-def test_hex_to_bytes_computes_correctly():
+def test_hex_to_bytes_computes_value_correctly():
     assert crypto_base.hex_to_bytes("ffff") == bytes([255, 255])
 
 def test_xor_block_raises_value_error_on_different_lengths():
@@ -38,8 +38,11 @@ def test_is_english_common():
         else:
             assert ~crypto_base.is_english_common(char)
 
-def test_entropy():
-    pass
+def test_entropy_computes_value_correctly():
+    distribution = bytes([1,1,1,2])
+    assert crypto_base.entropy(distribution) == pytest.approx(0.8112781244591328, 1e-16)
+    distribution = bytes([1,1,2,2])
+    assert crypto_base.entropy(distribution) == pytest.approx(1, 1e-16)
 
 def test_ice_encrypt_computes_value_correctly():
     plaintext = bytes([0, 20, 30, 40, 50, 60, 255, 235, 215, 185, 101])
