@@ -41,10 +41,25 @@ def get_most_englishy_single_byte_decryption(cipher: bytes):
             message = ts
     return bytes(message)
 
-def entropy(b):
+def entropy(b: bytes):
     frequencies = np.array(list(Counter(b).values()))
     frequencies = frequencies / frequencies.sum()
     return (frequencies*(-np.log2(frequencies))).sum()
+
+
+class RepeatingXOR:
+    def __init__(self, key: bytes):
+        self._key = key
+        self._key_length = len(key)
+
+    def encrypt(self, plaintext: bytes):
+        cipher = []
+        for i, c in enumerate(plaintext):
+            cipher.append(c ^ self._key[i % self._key_length])
+        return bytes(cipher)
+
+    def decrypt(self, ciphertext: bytes):
+        return self.encrypt(ciphertext)
 
 def ice_encrypt(s):
     ice = [ord(c) for c in "ICE"]

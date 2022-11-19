@@ -38,3 +38,14 @@ def test_is_english_common():
         else:
             assert ~crypto_base.is_english_common(char)
 
+def test_entropy():
+    pass
+
+def test_ice_encrypt_computes_value_correctly():
+    plaintext = bytes([0, 20, 30, 40, 50, 60, 255, 235, 215, 185, 101])
+    key = bytes([33, 201, 45, 177])
+    result = bytes([33, 221, 51, 153, 19, 245, 210, 90, 246,  112, 72])
+    scheme = crypto_base.RepeatingXOR(key=key)
+    assert scheme.encrypt(plaintext) == result
+    assert scheme.decrypt(scheme.encrypt(plaintext)) == plaintext
+
