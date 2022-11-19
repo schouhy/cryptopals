@@ -15,7 +15,6 @@ def xor_block(block1: bytes, block2: bytes):
 def single_byte_xor(barray: bytes, c: int):
     if c < 0 or c > 255:
         raise ValueError("`c` must be between 0 and 255")
-
     return bytearray(map(lambda x: x ^ c, barray))
 
 def is_in_interval(c, lo, hi):
