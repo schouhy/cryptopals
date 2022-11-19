@@ -5,7 +5,7 @@ import base64
 
 
 def hex_to_bytes(h):
-    return bytearray.fromhex(h)
+    return bytes.fromhex(h)
 
 def xor_block(block1: bytes, block2: bytes):
     if len(block1) != len(block2):

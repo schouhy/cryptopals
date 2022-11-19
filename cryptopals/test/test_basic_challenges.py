@@ -25,19 +25,23 @@ def test_challenge_4():
     # Load file
     with open(Path(__file__).parent / "challenge4.txt", "r") as file:
         lines = file.readlines()
-
     # Strip new line characters and parse hex as bytes
     lines     = list(map(lambda x: x.strip("\n"), lines))
     lines     = list(map(crypto_base.hex_to_bytes, lines))
-
     # Get the line `candidate` with minimum entropy
     entropies = [(crypto_base.entropy(line), i) for i, line in enumerate(lines)]
     _, candidate = sorted(entropies, key=lambda x: x[0])[0]
     ciphertext = lines[candidate]
-
     # Decrypt the candidate line using the most english like decryption heuristic
     plaintext = crypto_base.get_most_englishy_single_byte_decryption(ciphertext)
     assert plaintext == message_to_find 
+
+def test_challenge_5():
+    message = b"Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal"
+    ciphertext_hex = "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f"
+    ciphertext = crypto_base.hex_to_bytes(ciphertext_hex)
+    scheme = crypto_base.RepeatingXOR(key=b"ICE")
+    assert scheme.encrypt(message) == ciphertext
 
 
 
