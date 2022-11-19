@@ -2,6 +2,7 @@ import base64
 import cryptopals.base as crypto_base
 from pathlib import Path
 
+TEST_DIR = Path(__file__).parent
 
 def test_challenge_1():
     string_in_hex = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d"
@@ -23,7 +24,7 @@ def test_challenge_3():
 def test_challenge_4():
     message_to_find = b"Now that the party is jumping\n"
     # Load file
-    with open(Path(__file__).parent / "challenge4.txt", "r") as file:
+    with open(TEST_DIR / "challenge4.txt", "r") as file:
         lines = file.readlines()
     # Strip new line characters and parse hex as bytes
     lines     = list(map(lambda x: x.strip("\n"), lines))
@@ -42,6 +43,22 @@ def test_challenge_5():
     ciphertext = crypto_base.hex_to_bytes(ciphertext_hex)
     scheme = crypto_base.RepeatingXOR(key=b"ICE")
     assert scheme.encrypt(message) == ciphertext
+
+def test_challenge_6():
+    # Read ciphertext from file
+    ciphertext = crypto_base.load_multiline_base64(TEST_DIR / "challenge6.txt")
+    keysize, _ = crypto_base.get_keysize_candidates_entropy(ciphertext)[0]
+    assert keysize == 29
+    plaintext = crypto_base.break_repeating_xor(ciphertext, keysize=keysize)
+    # Load solution
+    with open(TEST_DIR / "challenge6_plaintext.txt", "r") as solution_file:
+        expected_plaintext = solution_file.readlines()
+    expected_plaintext = "".join(expected_plaintext)
+    # Assert the expected plaintext and the solution match
+    assert plaintext.decode() == expected_plaintext
+
+    
+
 
 
 

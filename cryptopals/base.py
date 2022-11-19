@@ -103,8 +103,8 @@ def get_keysize_candidates_entropy(s, min_size=2, max_size=40):
 
 def break_repeating_xor(s, keysize):
     cipher_chunks = [s[i : : keysize] for i in range(keysize)]
-    text_chunks = [get_most_englishy_single_byte_decryption(chunk, True)[1].decode() for chunk in cipher_chunks]
-    return "".join(["".join(t) for t in zip(*text_chunks)])
+    text_chunks = [get_most_englishy_single_byte_decryption(chunk).decode() for chunk in cipher_chunks]
+    return "".join(["".join(t) for t in zip(*text_chunks)]).encode()
 
 def load_multiline_base64(filepath):
     with open(filepath, "r") as file:
