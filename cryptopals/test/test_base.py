@@ -52,3 +52,6 @@ def test_ice_encrypt_computes_value_correctly():
     assert scheme.encrypt(plaintext) == result
     assert scheme.decrypt(scheme.encrypt(plaintext)) == plaintext
 
+def test_hamming_distance_computes_value_correctly():
+    assert crypto_base.hamming_distance(b"this is a test", b"wokka wokka!!!") == 37
+

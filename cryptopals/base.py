@@ -68,8 +68,7 @@ def ice_encrypt(s):
         cipher.append(ord(c) ^ ice[i % 3])
     return bytearray(cipher).hex()
 
-def hamming_distance(s1, s2):
-    "input: bytearray"
+def hamming_distance(s1: bytes, s2: bytes):
     if len(s1) != len(s2):
         return None
 
