@@ -2,7 +2,10 @@ import base64
 import cryptopals.base as crypto_base
 from pathlib import Path
 
+from Crypto.Cipher import AES
+
 TEST_DIR = Path(__file__).parent
+
 
 def test_challenge_1():
     string_in_hex = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d"
@@ -57,16 +60,15 @@ def test_challenge_6():
     # Assert the expected plaintext and the solution match
     assert plaintext.decode() == expected_plaintext
 
-    
+def test_challenge_7():
+    ciphertext = crypto_base.load_multiline_base64(TEST_DIR / "challenge7.txt")
+    key = b"YELLOW SUBMARINE"
+    plaintext = AES.new(key, AES.MODE_ECB).decrypt(ciphertext)
+    # Load solution
+    with open(TEST_DIR / "challenge7_plaintext.txt", "r") as solution_file:
+        expected_plaintext = solution_file.readlines()
+    expected_plaintext = "".join(expected_plaintext)
+    # Assert the expected plaintext and the solution match
+    assert plaintext.decode() == expected_plaintext
 
-
-
-
-
-
-
-
-    
-
-    
 
