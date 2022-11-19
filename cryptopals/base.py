@@ -21,7 +21,7 @@ def single_byte_xor(barray: bytes, c: int):
 def is_in_interval(c, lo, hi):
     return (c >= lo) and (c < hi)
 
-def is_common(c):
+def is_english_common(c):
     intervals = [(32, 33), (65, 91), (97, 123)]
     for lo, hi in intervals:
         if is_in_interval(c, lo, hi):
@@ -35,7 +35,7 @@ def get_most_englishy_single_byte_decryption(cipher: bytes):
         new_res = 0
         ts = [o ^ i for o in cipher]
         for c in ts:
-            if is_common(c):
+            if is_english_common(c):
                 new_res += 1
         if new_res > res:
             res = new_res
