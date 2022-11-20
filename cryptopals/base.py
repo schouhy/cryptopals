@@ -70,34 +70,6 @@ def hamming_distance(s1: bytes, s2: bytes):
         res += np.array(list(bin(s1[i] ^ s2[i])[2:])).astype(bool).sum()
     return res
 
-def get_keysize_candidates_normalized_hamming(s, min_size=2, max_size=40):
-    nahd = []
-    for keysize in range(min_size, max_size + 1):
-        i = 0
-        accum = []
-        while i + 2*keysize < len(s):
-            s1 = s[i: i + keysize]
-            s2 = s[i + keysize: i + 2 * keysize]
-
-            accum.append(hamming_distance(s1, s2) / keysize)
-            i += keysize
-
-        if len(accum) > 0:
-            nahd.append((keysize, sum(accum) / len(accum)))
-
-    return sorted(nahd, key = lambda x: x[1])
-
-def get_keysize_candidates_entropy(s, min_size=2, max_size=40):
-    average_entropy = []
-    for keysize in range(min_size, max_size + 1):
-        m = np.array(([entropy(s[i::keysize]) for i in range(keysize)])).mean()
-        average_entropy.append((keysize, m))
-    return sorted(average_entropy, key = lambda x: x[1])
-
-def break_repeating_xor(s, keysize):
-    cipher_chunks = [s[i : : keysize] for i in range(keysize)]
-    text_chunks = [get_most_englishy_single_byte_decryption(chunk).decode() for chunk in cipher_chunks]
-    return "".join(["".join(t) for t in zip(*text_chunks)]).encode()
 
 def load_multiline_base64(filepath):
     with open(filepath, "r") as file:

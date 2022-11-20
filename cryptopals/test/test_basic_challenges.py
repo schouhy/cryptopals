@@ -1,6 +1,10 @@
 import base64
-import cryptopals.base as crypto_base
 from pathlib import Path
+
+import cryptopals.base as crypto_base
+
+from cryptopals import challenge4, challenge6
+
 
 from Crypto.Cipher import AES
 
@@ -26,19 +30,8 @@ def test_challenge_3():
 
 def test_challenge_4():
     message_to_find = b"Now that the party is jumping\n"
-    # Load file
-    with open(TEST_DIR / "challenge4.txt", "r") as file:
-        lines = file.readlines()
-    # Strip new line characters and parse hex as bytes
-    lines     = list(map(lambda x: x.strip("\n"), lines))
-    lines     = list(map(crypto_base.hex_to_bytes, lines))
-    # Get the line `candidate` with minimum entropy
-    entropies = [(crypto_base.entropy(line), i) for i, line in enumerate(lines)]
-    _, candidate = sorted(entropies, key=lambda x: x[0])[0]
-    ciphertext = lines[candidate]
-    # Decrypt the candidate line using the most english like decryption heuristic
-    plaintext = crypto_base.get_most_englishy_single_byte_decryption(ciphertext)
-    assert plaintext == message_to_find 
+    solver = challenge4.Solver(filepath=TEST_DIR / "challenge4.txt")
+    assert solver.solve() == message_to_find
 
 def test_challenge_5():
     message = b"Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal"
@@ -48,17 +41,12 @@ def test_challenge_5():
     assert scheme.encrypt(message) == ciphertext
 
 def test_challenge_6():
-    # Read ciphertext from file
-    ciphertext = crypto_base.load_multiline_base64(TEST_DIR / "challenge6.txt")
-    keysize, _ = crypto_base.get_keysize_candidates_entropy(ciphertext)[0]
-    assert keysize == 29
-    plaintext = crypto_base.break_repeating_xor(ciphertext, keysize=keysize)
     # Load solution
     with open(TEST_DIR / "challenge6_plaintext.txt", "r") as solution_file:
         expected_plaintext = solution_file.readlines()
-    expected_plaintext = "".join(expected_plaintext)
-    # Assert the expected plaintext and the solution match
-    assert plaintext.decode() == expected_plaintext
+    expected_plaintext = "".join(expected_plaintext).encode()
+    solver = challenge6.Solver(TEST_DIR / "challenge6.txt")
+    assert solver.solve() == expected_plaintext
 
 def test_challenge_7():
     ciphertext = crypto_base.load_multiline_base64(TEST_DIR / "challenge7.txt")
