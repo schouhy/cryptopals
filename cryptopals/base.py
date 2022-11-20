@@ -61,13 +61,6 @@ class RepeatingXOR:
     def decrypt(self, ciphertext: bytes):
         return self.encrypt(ciphertext)
 
-def ice_encrypt(s):
-    ice = [ord(c) for c in "ICE"]
-    cipher = []
-    for i, c in enumerate(s):
-        cipher.append(ord(c) ^ ice[i % 3])
-    return bytearray(cipher).hex()
-
 def hamming_distance(s1: bytes, s2: bytes):
     if len(s1) != len(s2):
         return None
@@ -113,18 +106,15 @@ def load_multiline_base64(filepath):
     cipher = base64.b64decode("".join(cipher))
     return cipher
 
-def pkcs7_padding(s, block_size: int):
+def pkcs7_padding(s: bytes, block_size: int):
+    if not isinstance(s, bytes):
+        raise ValueError("Input must be bytes.")
     padding_length = (-len(s)) % block_size
     if padding_length < 0:
         padding_length += block_size
     if padding_length == 0:
         padding_length = block_size
-    if isinstance(s, str):
-        return s + chr(padding_length)*padding_length
-    if isinstance(s, bytearray):
-        return s + bytearray([padding_length]*padding_length)
-    if isinstance(s, bytes):
-        return bytearray(s) + bytearray([padding_length]*padding_length)
+    return s + bytes([padding_length]*padding_length)
 
 def aes_ecb_encrypt(plaintext: bytes, key: bytes):
     from Crypto.Cipher import AES

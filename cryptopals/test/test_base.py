@@ -28,7 +28,7 @@ def test_single_byte_xor_computes_value_correctly():
     result = bytes([113, 246, 166, 58, 164, 151, 35, 138, 216, 235, 76, 240, 21, 97, 241, 166, 121, 109, 204, 107, 76, 118, 118, 9, 105, 141, 62, 107, 63, 241, 110, 208, 88, 87, 75, 5, 24, 112, 75, 127, 104, 230, 193, 209, 70, 148, 89, 131, 72, 63, 122, 50, 198, 42, 144, 221, 243, 155, 213, 254, 60, 203, 232, 109, 115, 163, 97, 36, 0, 23, 35, 233, 227, 159, 209, 35, 11, 92, 145, 171, 3, 105, 146, 111, 1, 145, 254, 122, 216, 62, 88, 32, 152, 64, 81, 146, 17, 235, 148, 227, 105, 249, 221, 64, 70, 205, 136, 40, 25, 113, 218, 57, 115, 200, 91, 86, 224, 114, 48, 204, 150, 246, 48, 251, 190, 73, 224, 249])
     assert crypto_base.single_byte_xor(block, c) == result
 
-def test_is_english_common():
+def test_is_english_common_computes_value_correctly():
     letters_lowercase = "abcdefghijklmnopqrstuvwxyz "
     for char in range(256):
         if char in letters_lowercase.encode():
@@ -54,4 +54,12 @@ def test_ice_encrypt_computes_value_correctly():
 
 def test_hamming_distance_computes_value_correctly():
     assert crypto_base.hamming_distance(b"this is a test", b"wokka wokka!!!") == 37
+
+def test_pkcs7_padding_computes_value_correctly():
+    plaintext1 = b"1234567890"
+    expected_padding_plaintext1 = b"1234567890\x06\x06\x06\x06\x06\x06"
+    assert crypto_base.pkcs7_padding(plaintext1, block_size=16) == expected_padding_plaintext1
+    plaintext2 = b"A"*16
+    expected_padding_plaintext2 = b"A"*16 + bytes([16]*16)
+    assert crypto_base.pkcs7_padding(plaintext2, block_size=16) == expected_padding_plaintext2
 
