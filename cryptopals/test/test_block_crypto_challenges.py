@@ -1,6 +1,8 @@
 import cryptopals.base as crypto_base
 from pathlib import Path
 
+from cryptopals import challenge11
+
 TEST_DIR = Path(__file__).parent
 
 def test_challenge_9():
@@ -19,4 +21,13 @@ def test_challenge_10():
         expected_plaintext = solution_file.readlines()
     expected_plaintext = "".join(expected_plaintext)
     assert plaintext.decode() == expected_plaintext
+
+def test_challenge_11():
+    oracle = challenge11.Oracle()
+    for _ in range(100):
+        detected_mode = challenge11.detect_oracle_mode(oracle.encrypt)
+        assert detected_mode == oracle._last_mode
+
+
+
 

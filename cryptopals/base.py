@@ -149,31 +149,6 @@ def sample_random_bytes(size: int):
     from os import urandom
     return urandom(size)
 
-def encryption_oracle_11(plaintext: bytes):
-    from Crypto.Cipher import AES
-    from random import randint
-    prefix = sample_random_bytes(randint(5, 10))
-    suffix = sample_random_bytes(randint(5, 10))
-    key = sample_random_bytes(16)
-    plaintext = prefix + bytearray(plaintext) + suffix
-    if randint(0, 9) <= 4:
-        iv = sample_random_bytes(16)
-        return aes_cbc_encrypt(plaintext, key, iv)
-    else:
-        aes_ecb = AES.new(key, AES.MODE_ECB)
-        if len(plaintext) % AES.block_size != 0:
-            plaintext = pkcs7_padding(plaintext, AES.block_size)
-        return aes_ecb.encrypt(plaintext)
-
-def detect_encryption_oracle_11(func):
-    from collections import Counter
-
-    cipher = func(bytes([0]*64))
-    count = max(Counter([cipher[i*16:(i+1)*16] for i in range(len(cipher)//16)]).values())
-    if count > 1:
-        return "ECB"
-    return "CBC"
-
 def encryption_oracle_12(plaintext: bytes):
     from Crypto.Cipher import AES
     from random import randint
