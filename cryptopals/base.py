@@ -1,7 +1,10 @@
 import pandas as pd
 import numpy  as np
 from collections import Counter
+from enum import Enum
 import base64
+
+from Crypto.Cipher import AES
 
 
 def hex_to_bytes(h):
@@ -88,17 +91,18 @@ def pkcs7_padding(s: bytes, block_size: int):
         padding_length = block_size
     return s + bytes([padding_length]*padding_length)
 
-def aes_ecb_encrypt(plaintext: bytes, key: bytes):
-    from Crypto.Cipher import AES
-    aes_ecb = AES.new(key, AES.MODE_ECB)
-    return aes_ecb.encrypt(pkcs7_padding(plaintext, 16))
+class AESECB:
+    BLOCK_SIZE = 16
+    def __init__(self, key: bytes):
+        self._block_cipher = AES.new(key, AES.MODE_ECB)
 
-def aes_ecb_decrypt(ciphertext: bytes, key: bytes):
-    from Crypto.Cipher import AES
-    aes_ecb = AES.new(key, AES.MODE_ECB)
-    plaintext = aes_ecb.decrypt(ciphertext)
-    padding = plaintext[-1]
-    return plaintext[:-padding]
+    def encrypt(self, plaintext: bytes):
+        return self._block_cipher.encrypt(pkcs7_padding(plaintext, self.BLOCK_SIZE))
+
+    def decrypt(self, ciphertext: bytes):
+        plaintext = self._block_cipher.decrypt(ciphertext)
+        padding = plaintext[-1]
+        return plaintext[:-padding]
 
 def aes_cbc_encrypt(plaintext: bytes, key: bytes, initialization_vector: bytes):
     from Crypto.Cipher import AES

@@ -44,7 +44,7 @@ def test_entropy_computes_value_correctly():
     distribution = bytes([1,1,2,2])
     assert crypto_base.entropy(distribution) == pytest.approx(1, 1e-16)
 
-def test_ice_encrypt_computes_value_correctly():
+def test_ice_encrypts_correctly():
     plaintext = bytes([0, 20, 30, 40, 50, 60, 255, 235, 215, 185, 101])
     key = bytes([33, 201, 45, 177])
     result = bytes([33, 221, 51, 153, 19, 245, 210, 90, 246,  112, 72])
@@ -62,4 +62,13 @@ def test_pkcs7_padding_computes_value_correctly():
     plaintext2 = b"A"*16
     expected_padding_plaintext2 = b"A"*16 + bytes([16]*16)
     assert crypto_base.pkcs7_padding(plaintext2, block_size=16) == expected_padding_plaintext2
+
+def test_aes_ecb_encrypts_correctly():
+    plaintext = b"This  is a test"
+    expected_ciphertext = crypto_base.hex_to_bytes("c7534967054e15c6a10a903bbb193e05")
+    key = b"YELLOW SUBMARINE"
+    scheme = crypto_base.AESECB(key=key)
+    ciphertext = scheme.encrypt(plaintext)
+    assert ciphertext == expected_ciphertext
+    assert scheme.decrypt(ciphertext) == plaintext
 
