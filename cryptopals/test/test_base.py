@@ -72,3 +72,13 @@ def test_aes_ecb_encrypts_correctly():
     assert ciphertext == expected_ciphertext
     assert scheme.decrypt(ciphertext) == plaintext
 
+def test_aes_cbc_encrypts_correctly():
+    plaintext = b"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam" 
+    expected_ciphertext = crypto_base.hex_to_bytes("dfd681e345f5fefbb13984ccea14a016a26b444e237dc2aec6281ca220daac39e05346b08a1cc22f82a3991bcd17db0a6f5b56f8e19c31a7ea09cc82fa8651c5c614cb8792e4504bf1687995314062c7d85478423b55f4bdaf5f8eb758debe324c5b53e0837b9e14ff6cec542f6ea8efd54b6d0a2dcf8ff9d703200eb6ab62d62a072d1ba61fe1cb63494be017bc5584bf1d2df3292510972a468c9984852f95")
+    key = b"YELLOW SUBMARINE"
+    initialization_vector = b"0"*16
+    scheme = crypto_base.AESCBC(key=key)
+    ciphertext, _ = scheme.encrypt(plaintext, initialization_vector)
+    assert ciphertext == expected_ciphertext
+    assert scheme.decrypt(ciphertext, initialization_vector) == plaintext
+

@@ -1,8 +1,10 @@
 import pandas as pd
 import numpy  as np
 from collections import Counter
+from functools import reduce
 from enum import Enum
 import base64
+from typing import List
 
 from Crypto.Cipher import AES
 
@@ -73,13 +75,12 @@ def hamming_distance(s1: bytes, s2: bytes):
         res += np.array(list(bin(s1[i] ^ s2[i])[2:])).astype(bool).sum()
     return res
 
-
 def load_multiline_base64(filepath):
     with open(filepath, "r") as file:
-        cipher = file.readlines()
-    cipher = [line.strip("\n") for line in cipher]
-    cipher = base64.b64decode("".join(cipher))
-    return cipher
+        content = file.readlines()
+    content = [line.strip("\n") for line in content]
+    content = base64.b64decode("".join(content))
+    return content
 
 def pkcs7_padding(s: bytes, block_size: int):
     if not isinstance(s, bytes):
@@ -96,50 +97,53 @@ class AESECB:
     def __init__(self, key: bytes):
         self._block_cipher = AES.new(key, AES.MODE_ECB)
 
-    def encrypt(self, plaintext: bytes):
-        return self._block_cipher.encrypt(pkcs7_padding(plaintext, self.BLOCK_SIZE))
+    def encrypt(self, plaintext: bytes, pad: bool = True):
+        if pad:
+            plaintext = pkcs7_padding(plaintext, self.BLOCK_SIZE)
+        return self._block_cipher.encrypt(plaintext)
 
-    def decrypt(self, ciphertext: bytes):
+    def decrypt(self, ciphertext: bytes, unpad: bool = True):
         plaintext = self._block_cipher.decrypt(ciphertext)
+        if unpad:
+            padding = plaintext[-1]
+            plaintext = plaintext[:-padding]
+        return plaintext
+
+
+class AESCBC:
+    def __init__(self, key: bytes):
+        self._block_cipher = AESECB(key)
+
+    def _split_bytes_into_blocks(self, data: bytes) -> List[bytes]:
+        block_size = self._block_cipher.BLOCK_SIZE
+        num_blocks = len(data) // block_size
+        return [data[block_size*i: block_size*(i+1)] for i in range(num_blocks)]
+
+    @staticmethod
+    def _join_blocks_into_bytes(data: List[bytes]) -> bytes:
+        return reduce(lambda a, b: a + b, data)
+
+    def encrypt(self, plaintext: bytes, initialization_vector: bytes):
+        plaintext = pkcs7_padding(plaintext, self._block_cipher.BLOCK_SIZE)
+        plaintext_blocks = self._split_bytes_into_blocks(plaintext)
+        ciphertext_blocks = []
+        for plaintext_block in plaintext_blocks:
+            initialization_vector = self._block_cipher.encrypt(xor_block(plaintext_block, initialization_vector), pad=False)
+            ciphertext_blocks.append(initialization_vector)
+        return self._join_blocks_into_bytes(ciphertext_blocks), initialization_vector
+
+    def decrypt(self, cipher: bytes, initialization_vector: bytes):
+        if len(cipher) % self._block_cipher.BLOCK_SIZE != 0:
+            raise ValueError(f"Malformed cipher. Its length is not divisible by {AES.block_size}")
+
+        ciphertext_blocks = self._split_bytes_into_blocks(cipher)
+        plaintext_blocks = []
+        for block in ciphertext_blocks:
+            plaintext_blocks.append(xor_block(self._block_cipher.decrypt(block, unpad=False), initialization_vector))
+            initialization_vector = block
+        plaintext = self._join_blocks_into_bytes(plaintext_blocks)
         padding = plaintext[-1]
         return plaintext[:-padding]
-
-def aes_cbc_encrypt(plaintext: bytes, key: bytes, initialization_vector: bytes):
-    from Crypto.Cipher import AES
-    from functools import reduce
-
-    aes_ecb = AES.new(key, AES.MODE_ECB)
-    if len(plaintext) % AES.block_size != 0:
-        plaintext = pkcs7_padding(plaintext, AES.block_size)
-
-    num_blocks = len(plaintext) // AES.block_size
-    plaintext_blocks = [plaintext[AES.block_size*i: AES.block_size*(i+1)] for i in range(num_blocks)]
-    cipher_blocks = []
-
-    for plaintext_block in plaintext_blocks:
-        initialization_vector = aes_ecb.encrypt(xor_block(plaintext_block, initialization_vector))
-        cipher_blocks.append(initialization_vector)
-
-    return reduce(lambda a, b: a + b, cipher_blocks)
-
-
-def aes_cbc_decrypt(cipher: bytes, key: bytes, initialization_vector: bytes):
-    from Crypto.Cipher import AES
-    from functools import reduce
-
-    aes_ecb = AES.new(key, AES.MODE_ECB)
-    if len(cipher) % AES.block_size != 0:
-        raise ValueError(f"Malformed cipher. Its length is not divisible by {AES.block_size}")
-
-    num_blocks = len(cipher) // AES.block_size
-    cipher_blocks = [cipher[AES.block_size*i: AES.block_size*(i+1)] for i in range(num_blocks)]
-    plaintext_blocks = []
-
-    for cipher_block in cipher_blocks:
-        plaintext_blocks.append(xor_block(aes_ecb.decrypt(cipher_block), initialization_vector))
-        initialization_vector = cipher_block
-
-    return reduce(lambda a, b: a + b, plaintext_blocks)
 
 def sample_random_bytes(size: int):
     from os import urandom
