@@ -1,7 +1,7 @@
 import cryptopals.base as crypto_base
 from pathlib import Path
 
-from cryptopals import challenge11, challenge12
+from cryptopals import challenge11, challenge12, challenge13
 
 TEST_DIR = Path(__file__).parent
 
@@ -34,4 +34,10 @@ def test_challenge_12():
     solution = b"Rollin' in my 5.0\nWith my rag-top down so my hair can blow\nThe girlies on standby waving just to say hi\nDid you stop? No, I just drove by\n"
     assert solution == result
 
+def test_challenge_13():
+    oracle = challenge13.Oracle()
+    forged_profile_ciphertext = challenge13.forge_admin_user(oracle.make_profile)
+    forged_profile = oracle.read_profile(forged_profile_ciphertext)
+    assert "role" in forged_profile.keys()
+    assert forged_profile["role"] == "admin"
 
