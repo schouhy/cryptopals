@@ -8,7 +8,7 @@ TEST_DIR = Path(__file__).parent
 def test_challenge_9():
     plaintext = b"YELLOW SUBMARINE"
     expectd_padded_plaintext = b"YELLOW SUBMARINE\x04\x04\x04\x04"
-    assert crypto_base.pkcs7_padding(plaintext, 20) == expectd_padded_plaintext
+    assert crypto_base.pkcs7_pad(plaintext, 20) == expectd_padded_plaintext
 
 def test_challenge_10():
     ciphertext = crypto_base.load_multiline_base64(TEST_DIR / "challenge10.txt")

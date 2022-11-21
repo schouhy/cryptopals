@@ -40,6 +40,6 @@ def forge_admin_user(oracle_make_profile_function):
     # Have the oracle encrypt the block "admin||padding" as the second block of a 
     # two block sized email address
     length2 = 16 - len(b"email=")
-    admin_block = oracle_make_profile_function(b"A"*length2 + crypto_base.pkcs7_padding(b"admin", 16))[16:32]
+    admin_block = oracle_make_profile_function(b"A"*length2 + crypto_base.pkcs7_pad(b"admin", 16))[16:32]
     return stem + admin_block
 

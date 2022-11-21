@@ -82,7 +82,7 @@ def load_multiline_base64(filepath):
     content = base64.b64decode("".join(content))
     return content
 
-def pkcs7_padding(s: bytes, block_size: int):
+def pkcs7_pad(s: bytes, block_size: int):
     if not isinstance(s, bytes):
         raise ValueError("Input must be bytes.")
     padding_length = (-len(s)) % block_size
@@ -99,7 +99,7 @@ class AESECB:
 
     def encrypt(self, plaintext: bytes, pad: bool = True):
         if pad:
-            plaintext = pkcs7_padding(plaintext, self.BLOCK_SIZE)
+            plaintext = pkcs7_pad(plaintext, self.BLOCK_SIZE)
         return self._block_cipher.encrypt(plaintext)
 
     def decrypt(self, ciphertext: bytes, unpad: bool = True):
@@ -124,7 +124,7 @@ class AESCBC:
         return reduce(lambda a, b: a + b, data)
 
     def encrypt(self, plaintext: bytes, initialization_vector: bytes):
-        plaintext = pkcs7_padding(plaintext, self._block_cipher.BLOCK_SIZE)
+        plaintext = pkcs7_pad(plaintext, self._block_cipher.BLOCK_SIZE)
         plaintext_blocks = self._split_bytes_into_blocks(plaintext)
         ciphertext_blocks = []
         for plaintext_block in plaintext_blocks:

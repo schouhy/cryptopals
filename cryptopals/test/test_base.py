@@ -55,13 +55,13 @@ def test_ice_encrypts_correctly():
 def test_hamming_distance_computes_value_correctly():
     assert crypto_base.hamming_distance(b"this is a test", b"wokka wokka!!!") == 37
 
-def test_pkcs7_padding_computes_value_correctly():
+def test_pkcs7_pad_computes_value_correctly():
     plaintext1 = b"1234567890"
     expected_padding_plaintext1 = b"1234567890\x06\x06\x06\x06\x06\x06"
-    assert crypto_base.pkcs7_padding(plaintext1, block_size=16) == expected_padding_plaintext1
+    assert crypto_base.pkcs7_pad(plaintext1, block_size=16) == expected_padding_plaintext1
     plaintext2 = b"A"*16
     expected_padding_plaintext2 = b"A"*16 + bytes([16]*16)
-    assert crypto_base.pkcs7_padding(plaintext2, block_size=16) == expected_padding_plaintext2
+    assert crypto_base.pkcs7_pad(plaintext2, block_size=16) == expected_padding_plaintext2
 
 def test_aes_ecb_encrypts_correctly():
     plaintext = b"This  is a test"
