@@ -92,6 +92,23 @@ def pkcs7_pad(s: bytes, block_size: int):
         padding_length = block_size
     return s + bytes([padding_length]*padding_length)
 
+class BadPadding(Exception):
+    pass
+
+def pkcs7_unpad(s: bytes, block_size: int):
+    if not isinstance(s, bytes):
+        raise ValueError("Input must be bytes.")
+    if block_size < 0 or block_size > 255:
+        raise ValueError("Blocks size must be in the range 0 to 255.")
+
+    if len(s) % block_size != 0:
+        raise ValueError("Size must be divisible by the block size.")
+    pad = s[-1]
+
+    if len(set(s[-pad:])) != 1:
+        raise BadPadding
+    return s[:-pad]
+
 class AESECB:
     BLOCK_SIZE = 16
     def __init__(self, key: bytes):

@@ -1,3 +1,4 @@
+import pytest
 import cryptopals.base as crypto_base
 from pathlib import Path
 
@@ -46,3 +47,10 @@ def test_challenge_14():
     result = challenge14.find_and_decrypt_suffix(oracle.encrypt)
     solution = b"Rollin' in my 5.0\nWith my rag-top down so my hair can blow\nThe girlies on standby waving just to say hi\nDid you stop? No, I just drove by\n"
     assert solution == result
+
+def test_challenge_15():
+    with pytest.raises(crypto_base.BadPadding) as e_info:
+        crypto_base.pkcs7_unpad(b"ICE ICE BABY\x05\x05\x05\x05", 16)
+    with pytest.raises(crypto_base.BadPadding) as e_info:
+        crypto_base.pkcs7_unpad(b"ICE ICE BABY\x01\x02\x03\x04", 16)
+
