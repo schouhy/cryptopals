@@ -1,7 +1,7 @@
 import cryptopals.base as crypto_base
 from pathlib import Path
 
-from cryptopals import challenge11
+from cryptopals import challenge11, challenge12
 
 TEST_DIR = Path(__file__).parent
 
@@ -28,6 +28,10 @@ def test_challenge_11():
         detected_mode = challenge11.detect_oracle_mode(oracle.encrypt)
         assert detected_mode == oracle._last_mode
 
-
+def test_challenge_12():
+    oracle = challenge12.Oracle()
+    result = challenge12.find_and_decrypt_suffix(oracle)
+    solution = b"Rollin' in my 5.0\nWith my rag-top down so my hair can blow\nThe girlies on standby waving just to say hi\nDid you stop? No, I just drove by\n"
+    assert solution == result
 
 
