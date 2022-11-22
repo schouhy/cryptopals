@@ -2,7 +2,7 @@ import pytest
 import cryptopals.base as crypto_base
 from pathlib import Path
 
-from cryptopals import challenge11, challenge12, challenge13, challenge14
+from cryptopals import challenge11, challenge12, challenge13, challenge14, challenge16
 
 TEST_DIR = Path(__file__).parent
 
@@ -53,4 +53,9 @@ def test_challenge_15():
         crypto_base.pkcs7_unpad(b"ICE ICE BABY\x05\x05\x05\x05", 16)
     with pytest.raises(crypto_base.BadPadding) as e_info:
         crypto_base.pkcs7_unpad(b"ICE ICE BABY\x01\x02\x03\x04", 16)
+
+def test_challenge_16():
+    oracle = challenge16.Oracle()
+    forged_payload = challenge16.forge_admin(oracle.make_payload, oracle.is_admin)
+    assert oracle.is_admin(forged_payload)
 

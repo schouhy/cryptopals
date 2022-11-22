@@ -60,7 +60,7 @@ def test_pkcs7_pad_computes_value_correctly():
     expected_padding_plaintext1 = b"1234567890\x06\x06\x06\x06\x06\x06"
     assert crypto_base.pkcs7_pad(plaintext1, block_size=16) == expected_padding_plaintext1
     plaintext2 = b"A"*16
-    expected_padding_plaintext2 = b"A"*16 + bytes([16]*16)
+    expected_padding_plaintext2 = b"A"*16 + b"\x10"*16
     assert crypto_base.pkcs7_pad(plaintext2, block_size=16) == expected_padding_plaintext2
 
 def test_pkcs7_unpad_computes_value_correctly():
@@ -77,7 +77,6 @@ def test_pkcs7_unpad_raises_exception_on_bad_input():
         crypto_base.pkcs7_unpad(b"ICE ICE BABY\x05\x05\x05\x05", 16)
     with pytest.raises(crypto_base.BadPadding) as e_info:
         crypto_base.pkcs7_unpad(b"ICE ICE BABY\x01\x02\x03\x04", 16)
-
 
 def test_aes_ecb_encrypts_correctly():
     plaintext = b"This  is a test"

@@ -1,4 +1,3 @@
-
 from Crypto.Cipher import AES
 from random import randint
 from base64 import b64decode
