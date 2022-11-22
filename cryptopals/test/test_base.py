@@ -36,7 +36,7 @@ def test_is_english_common_computes_value_correctly():
         elif char in letters_lowercase.upper().encode():
             assert crypto_base.is_english_common(char)
         else:
-            assert ~crypto_base.is_english_common(char)
+            assert not crypto_base.is_english_common(char)
 
 def test_entropy_computes_value_correctly():
     distribution = bytes([1,1,1,2])
