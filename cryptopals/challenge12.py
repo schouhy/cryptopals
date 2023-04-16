@@ -17,7 +17,7 @@ class Oracle:
         return self._scheme.encrypt(plaintext + self._suffix)
 
 
-def get_oracle_block_size_and_message_length(func):
+def get_oracle_block_size_and_suffix_length(func):
     m = len(func(b""))
     i = 0
     M = m
@@ -28,20 +28,21 @@ def get_oracle_block_size_and_message_length(func):
 
 
 def find_and_decrypt_suffix(func):
-    block_size, message_length = get_oracle_block_size_and_message_length(func)
-    message_length_with_padding = len(func(b""))
-    assert message_length_with_padding % block_size == 0
-    decrypted_message = b""
+    block_size, suffix_length = get_oracle_block_size_and_suffix_length(func)
+    suffix_length_with_padding = len(func(b""))
+    assert suffix_length_with_padding % block_size == 0
+    decrypted_suffix = b""
 
-    number_of_blocks = message_length_with_padding // block_size
+    number_of_blocks = suffix_length_with_padding // block_size
     for i in range(number_of_blocks):
         for j in range(15, -1, -1):
             block_to_find = func(b"A" * j)[i * block_size : (i + 1) * block_size]
             for c in range(0, 255):
-                block_candidate = func(b"A" * j + decrypted_message + bytes([c]))[
+                block_candidate = func(b"A" * j + decrypted_suffix + bytes([c]))[
                     i * block_size : (i + 1) * block_size
                 ]
                 if block_candidate == block_to_find:
-                    decrypted_message = decrypted_message + bytes([c])
+                    decrypted_suffix = decrypted_suffix + bytes([c])
                     break
-    return decrypted_message[:message_length]
+    return decrypted_suffix[:suffix_length]
+

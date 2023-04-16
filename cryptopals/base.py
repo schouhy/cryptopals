@@ -9,7 +9,7 @@ from typing import List
 from Crypto.Cipher import AES
 
 
-def hex_to_bytes(h):
+def hex_to_bytes(h: str):
     return bytes.fromhex(h)
 
 
