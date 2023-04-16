@@ -69,13 +69,13 @@ def test_pkcs7_unpad_computes_value_correctly():
     assert crypto_base.pkcs7_unpad(padded_plaintext, block_size=16) == expected_plaintext
 
 def test_pkcs7_unpad_raises_exception_on_bad_input():
-    with pytest.raises(ValueError) as e_info:
+    with pytest.raises(ValueError):
         crypto_base.pkcs7_unpad(b"ICE ICE BAB\x04\x04\x04\x04", 16)
-    with pytest.raises(ValueError) as e_info:
+    with pytest.raises(ValueError):
         crypto_base.pkcs7_unpad(b"ICE ICE BABY\x04\x04\x04\x04", 15)
-    with pytest.raises(crypto_base.BadPadding) as e_info:
+    with pytest.raises(crypto_base.BadPadding):
         crypto_base.pkcs7_unpad(b"ICE ICE BABY\x05\x05\x05\x05", 16)
-    with pytest.raises(crypto_base.BadPadding) as e_info:
+    with pytest.raises(crypto_base.BadPadding):
         crypto_base.pkcs7_unpad(b"ICE ICE BABY\x01\x02\x03\x04", 16)
 
 def test_aes_ecb_encrypts_correctly():
