@@ -22,10 +22,14 @@ class Oracle:
             scheme = crypto_base.AESECB(key=key)
             return scheme.encrypt(plaintext)
 
+
 def detect_oracle_mode(func):
-    cipher = func(bytes([0]*64))
-    count = max(Counter([cipher[i*16:(i+1)*16] for i in range(len(cipher)//16)]).values())
+    cipher = func(bytes([0] * 64))
+    count = max(
+        Counter(
+            [cipher[i * 16 : (i + 1) * 16] for i in range(len(cipher) // 16)]
+        ).values()
+    )
     if count > 1:
         return "ECB"
     return "CBC"
-

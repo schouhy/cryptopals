@@ -1,5 +1,5 @@
 import pandas as pd
-import numpy  as np
+import numpy as np
 from collections import Counter
 from functools import reduce
 from enum import Enum
@@ -12,18 +12,22 @@ from Crypto.Cipher import AES
 def hex_to_bytes(h):
     return bytes.fromhex(h)
 
+
 def xor_block(block1: bytes, block2: bytes):
     if len(block1) != len(block2):
         raise ValueError("blocks need to have same length")
     return bytes([x ^ y for x, y in zip(block1, block2)])
+
 
 def single_byte_xor(barray: bytes, c: int):
     if c < 0 or c > 255:
         raise ValueError("`c` must be between 0 and 255")
     return bytearray(map(lambda x: x ^ c, barray))
 
+
 def is_in_interval(c, lo, hi):
     return (c >= lo) and (c < hi)
+
 
 def is_english_common(c):
     intervals = [(32, 33), (65, 91), (97, 123)]
@@ -31,6 +35,7 @@ def is_english_common(c):
         if is_in_interval(c, lo, hi):
             return True
     return False
+
 
 def get_most_englishy_single_byte_decryption(cipher: bytes):
     res = 0
@@ -46,10 +51,11 @@ def get_most_englishy_single_byte_decryption(cipher: bytes):
             message = ts
     return bytes(message)
 
+
 def entropy(b: bytes):
     frequencies = np.array(list(Counter(b).values()))
     frequencies = frequencies / frequencies.sum()
-    return (frequencies*(-np.log2(frequencies))).sum()
+    return (frequencies * (-np.log2(frequencies))).sum()
 
 
 class RepeatingXOR:
@@ -66,6 +72,7 @@ class RepeatingXOR:
     def decrypt(self, ciphertext: bytes):
         return self.encrypt(ciphertext)
 
+
 def hamming_distance(s1: bytes, s2: bytes):
     if len(s1) != len(s2):
         return None
@@ -75,12 +82,14 @@ def hamming_distance(s1: bytes, s2: bytes):
         res += np.array(list(bin(s1[i] ^ s2[i])[2:])).astype(bool).sum()
     return res
 
+
 def load_multiline_base64(filepath):
     with open(filepath, "r") as file:
         content = file.readlines()
     content = [line.strip("\n") for line in content]
     content = base64.b64decode("".join(content))
     return content
+
 
 def pkcs7_pad(s: bytes, block_size: int):
     if not isinstance(s, bytes):
@@ -90,10 +99,12 @@ def pkcs7_pad(s: bytes, block_size: int):
         padding_length += block_size
     if padding_length == 0:
         padding_length = block_size
-    return s + bytes([padding_length]*padding_length)
+    return s + bytes([padding_length] * padding_length)
+
 
 class BadPadding(Exception):
     pass
+
 
 def pkcs7_unpad(s: bytes, block_size: int):
     if not isinstance(s, bytes):
@@ -109,8 +120,10 @@ def pkcs7_unpad(s: bytes, block_size: int):
         raise BadPadding
     return s[:-pad]
 
+
 class AESECB:
     BLOCK_SIZE = 16
+
     def __init__(self, key: bytes):
         self._block_cipher = AES.new(key, AES.MODE_ECB)
 
@@ -134,7 +147,7 @@ class AESCBC:
     def _split_bytes_into_blocks(self, data: bytes) -> List[bytes]:
         block_size = self._block_cipher.BLOCK_SIZE
         num_blocks = len(data) // block_size
-        return [data[block_size*i: block_size*(i+1)] for i in range(num_blocks)]
+        return [data[block_size * i : block_size * (i + 1)] for i in range(num_blocks)]
 
     @staticmethod
     def _join_blocks_into_bytes(data: List[bytes]) -> bytes:
@@ -145,24 +158,35 @@ class AESCBC:
         plaintext_blocks = self._split_bytes_into_blocks(plaintext)
         ciphertext_blocks = []
         for plaintext_block in plaintext_blocks:
-            initialization_vector = self._block_cipher.encrypt(xor_block(plaintext_block, initialization_vector), pad=False)
-            ciphertext_blocks.append(initialization_vector)
+            ciphertext = self._block_cipher.encrypt(
+                xor_block(plaintext_block, initialization_vector), pad=False
+            )
+            ciphertext_blocks.append(ciphertext)
+            initialization_vector = ciphertext
         return self._join_blocks_into_bytes(ciphertext_blocks), initialization_vector
 
     def decrypt(self, cipher: bytes, initialization_vector: bytes):
         if len(cipher) % self._block_cipher.BLOCK_SIZE != 0:
-            raise ValueError(f"Malformed cipher. Its length is not divisible by {AES.block_size}")
+            raise ValueError(
+                f"Malformed cipher. Its length is not divisible by {AES.block_size}"
+            )
 
         ciphertext_blocks = self._split_bytes_into_blocks(cipher)
         plaintext_blocks = []
         for block in ciphertext_blocks:
-            plaintext_blocks.append(xor_block(self._block_cipher.decrypt(block, unpad=False), initialization_vector))
+            plaintext_blocks.append(
+                xor_block(
+                    self._block_cipher.decrypt(block, unpad=False),
+                    initialization_vector,
+                )
+            )
             initialization_vector = block
         plaintext = self._join_blocks_into_bytes(plaintext_blocks)
         padding = plaintext[-1]
         return plaintext[:-padding]
 
+
 def sample_random_bytes(size: int):
     from os import urandom
-    return urandom(size)
 
+    return urandom(size)

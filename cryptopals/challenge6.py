@@ -25,7 +25,7 @@ class Solver:
                 s1 = s[i: i + keysize]
                 s2 = s[i + keysize: i + 2 * keysize]
 
-                accum.append(hamming_distance(s1, s2) / keysize)
+                accum.append(crypto_base.hamming_distance(s1, s2) / keysize)
                 i += keysize
 
             if len(accum) > 0:
