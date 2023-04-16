@@ -49,9 +49,9 @@ def test_challenge_14():
     assert solution == result
 
 def test_challenge_15():
-    with pytest.raises(crypto_base.BadPadding) as e_info:
+    with pytest.raises(crypto_base.BadPadding):
         crypto_base.pkcs7_unpad(b"ICE ICE BABY\x05\x05\x05\x05", 16)
-    with pytest.raises(crypto_base.BadPadding) as e_info:
+    with pytest.raises(crypto_base.BadPadding):
         crypto_base.pkcs7_unpad(b"ICE ICE BABY\x01\x02\x03\x04", 16)
 
 def test_challenge_16():

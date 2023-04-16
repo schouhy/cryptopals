@@ -29,8 +29,8 @@ def get_prefix_block_number_with_offset(func, complement_length, block_size):
     """
     Computes `len(prefix || [A]*complement_length) // block_size`. 
     To do this we compute 
-        func(prefix || [A]*complement_length) and
-        func(prefix || [A]*complement_length || random_block)
+        func([A]*complement_length) and
+        func([A]*complement_length || random_block)
     and check the number common blocks at the beginning of both strings
     """
     out1 = func(b"A"*complement_length)
@@ -44,7 +44,7 @@ def get_prefix_block_number_with_offset(func, complement_length, block_size):
 def get_prefix_complement_and_block_offset(func):
     """
     Computes `(-len(prefix)) % block_size` (the prefix complement) and the ceiling of `len(prefix) / block_size` (the offset).
-    To do this we successively compute `prefix_block_number_with_offset` with increasing complement lengths until a change is
+    To do this we successively compute `get_prefix_block_number_with_offset` with increasing complement lengths until a change is
     seen.
     """
     block_size = get_block_size(func)
