@@ -35,7 +35,7 @@ def find_and_decrypt_suffix(func):
 
     number_of_blocks = suffix_length_with_padding // block_size
     for i in range(number_of_blocks):
-        for j in range(15, -1, -1):
+        for j in range(block_size - 1, -1, -1):
             block_to_find = func(b"A" * j)[i * block_size : (i + 1) * block_size]
             for c in range(0, 255):
                 block_candidate = func(b"A" * j + decrypted_suffix + bytes([c]))[
