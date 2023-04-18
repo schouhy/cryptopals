@@ -105,6 +105,8 @@ def pkcs7_pad(s: bytes, block_size: int):
 class BadPadding(Exception):
     pass
 
+def pkcs7_check_padding(s: bytes, pad: int):
+    return len(set(s[-pad:])) == 1
 
 def pkcs7_unpad(s: bytes, block_size: int):
     if not isinstance(s, bytes):
@@ -115,9 +117,9 @@ def pkcs7_unpad(s: bytes, block_size: int):
     if len(s) % block_size != 0:
         raise ValueError("Size must be divisible by the block size.")
     pad = s[-1]
-
-    if len(set(s[-pad:])) != 1:
+    if not pkcs7_check_padding(s, pad=pad):
         raise BadPadding
+
     return s[:-pad]
 
 
@@ -144,8 +146,11 @@ class AESCBC:
     def __init__(self, key: bytes):
         self._block_cipher = AESECB(key)
 
+    def block_size(self) -> int:
+        return self._block_cipher.BLOCK_SIZE
+
     def _split_bytes_into_blocks(self, data: bytes) -> List[bytes]:
-        block_size = self._block_cipher.BLOCK_SIZE
+        block_size = self.block_size()
         num_blocks = len(data) // block_size
         return [data[block_size * i : block_size * (i + 1)] for i in range(num_blocks)]
 
@@ -154,7 +159,7 @@ class AESCBC:
         return reduce(lambda a, b: a + b, data)
 
     def encrypt(self, plaintext: bytes, initialization_vector: bytes):
-        plaintext = pkcs7_pad(plaintext, self._block_cipher.BLOCK_SIZE)
+        plaintext = pkcs7_pad(plaintext, self.block_size())
         plaintext_blocks = self._split_bytes_into_blocks(plaintext)
         ciphertext_blocks = []
         for plaintext_block in plaintext_blocks:
@@ -166,7 +171,7 @@ class AESCBC:
         return self._join_blocks_into_bytes(ciphertext_blocks), initialization_vector
 
     def decrypt(self, cipher: bytes, initialization_vector: bytes):
-        if len(cipher) % self._block_cipher.BLOCK_SIZE != 0:
+        if len(cipher) % self.block_size() != 0:
             raise ValueError(
                 f"Malformed cipher. Its length is not divisible by {AES.block_size}"
             )
