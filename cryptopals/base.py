@@ -188,7 +188,10 @@ class AESCBC:
             initialization_vector = block
         plaintext = self._join_blocks_into_bytes(plaintext_blocks)
         padding = plaintext[-1]
-        return plaintext[:-padding]
+        if not pkcs7_check_padding(plaintext, padding):
+            raise BadPadding
+        plaintext = plaintext[:-padding]
+        return plaintext
 
 
 def sample_random_bytes(size: int):

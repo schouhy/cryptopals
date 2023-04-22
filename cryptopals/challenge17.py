@@ -2,6 +2,7 @@ from collections import namedtuple
 import cryptopals.base as crypto_base
 import random
 from pathlib import Path
+from typing import List
 
 DIR = Path(__file__).parent
 
@@ -9,12 +10,10 @@ OracleResult = namedtuple("OracleResult", ["cookie", "iv"])
 
 
 class Oracle:
-    def __init__(self) -> None:
-        key = crypto_base.sample_random_bytes(size=16)
+    def __init__(self, cookies_list: List[bytes], key=None) -> None:
+        key = key or crypto_base.sample_random_bytes(size=16)
+        self._list = cookies_list.copy()
         self._scheme = crypto_base.AESCBC(key=key)
-        with open(DIR / "challenge17.txt", "r") as infile:
-            self._list = infile.readlines()
-        self._list = [o.strip("\n").encode() for o in self._list]
 
     def sample_cookie(self) -> bytes:
         cookie = random.choice(self._list)
@@ -23,7 +22,8 @@ class Oracle:
         return OracleResult(cookie=self._scheme.encrypt(cookie, iv)[0], iv=iv)
 
     def check_cookie_padding(self, cookie_cipher: OracleResult) -> bytes:
-        cookie = self._scheme.decrypt(cookie_cipher.cookie, cookie_cipher.iv)
-        pad = cookie[-1]
-        return crypto_base.pkcs7_check_padding(cookie, pad)
-
+        try:
+            self._scheme.decrypt(cookie_cipher.cookie, cookie_cipher.iv)
+            return True
+        except crypto_base.BadPadding:
+            return False
