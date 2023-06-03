@@ -45,8 +45,9 @@ def test_challenge_6():
     with open(TEST_DIR / "challenge6_plaintext.txt", "r") as solution_file:
         expected_plaintext = solution_file.readlines()
     expected_plaintext = "".join(expected_plaintext).encode()
-    solver = challenge6.Solver(TEST_DIR / "challenge6.txt")
-    assert solver.solve() == expected_plaintext
+    ciphertext = crypto_base.load_multiline_base64(TEST_DIR / "challenge6.txt")
+    solver = challenge6.Solver()
+    assert solver.solve(ciphertext) == expected_plaintext
 
 def test_challenge_7():
     ciphertext = crypto_base.load_multiline_base64(TEST_DIR / "challenge7.txt")

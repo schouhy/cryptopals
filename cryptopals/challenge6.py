@@ -3,12 +3,9 @@ import numpy as np
 
 
 class Solver:
-    def __init__(self, filepath):
-        self._ciphertext = crypto_base.load_multiline_base64(filepath)
-
-    def solve(self):
-        keysize, _ = self.get_keysize_candidates_entropy(self._ciphertext)[0]
-        return self.break_repeating_xor(self._ciphertext, keysize=keysize)
+    def solve(self, ciphertext):
+        keysize, _ = self.get_keysize_candidates_entropy(ciphertext)[0]
+        return self.break_repeating_xor(ciphertext, keysize=keysize)
 
     @staticmethod
     def break_repeating_xor(s, keysize):
@@ -38,7 +35,7 @@ class Solver:
         return sorted(nahd, key=lambda x: x[1])
 
     @staticmethod
-    def get_keysize_candidates_entropy(s, min_size=2, max_size=40):
+    def get_keysize_candidates_entropy(s, min_size=2, max_size=100):
         average_entropy = []
         for keysize in range(min_size, max_size + 1):
             m = np.array(
