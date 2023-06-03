@@ -1,8 +1,6 @@
-import pandas as pd
 import numpy as np
 from collections import Counter
 from functools import reduce
-from enum import Enum
 import base64
 from typing import List
 
@@ -105,8 +103,10 @@ def pkcs7_pad(s: bytes, block_size: int):
 class BadPadding(Exception):
     pass
 
+
 def pkcs7_check_padding(s: bytes, pad: int):
     return len(set(s[-pad:])) == 1
+
 
 def pkcs7_unpad(s: bytes, block_size: int):
     if not isinstance(s, bytes):
@@ -194,8 +194,30 @@ class AESCBC:
         return plaintext
 
 
+class AESCRT:
+    def __init__(self, key: bytes):
+        self._block_cipher = AESECB(key)
+
+    def block_size(self) -> int:
+        return self._block_cipher.block_size()
+
+    def encrypt(self, plaintext: bytes, nonce: bytes):
+        if len(nonce) != 8:
+            raise ValueError("An 8-byte nonce is required")
+        keystream_number_blocks = (len(plaintext) + 15) // 16
+        if (keystream_number_blocks >> 64) > 0:
+            raise ValueError("Plaintext is too large")
+        counter = bytes([])
+        for i in range(keystream_number_blocks):
+            counter += nonce + i.to_bytes(8, "little")
+        keystream = self._block_cipher.encrypt(counter, pad = False)
+        return xor_block(plaintext, keystream[:len(plaintext)])
+
+    def decrypt(self, ciphertext: bytes, nonce: bytes):
+        return self.encrypt(ciphertext, nonce)
+
+
 def sample_random_bytes(size: int):
     from os import urandom
 
     return urandom(size)
-
